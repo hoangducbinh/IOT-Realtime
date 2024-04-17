@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Realtime Data</title>
+    <!-- Khai báo các thư viện cần thiết -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- CSS để định dạng giao diện -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -62,18 +64,22 @@
 <body>
     <div class="container">
         <h1>Realtime Data Dashboard</h1>
+        <!-- Hiển thị dữ liệu thời gian thực -->
         <div class="data-display">
             <p>Humidity: <span id="doam"></span> </p>
             <p>Temperature: <span id="nhietdo"></span> </p>
             <p>Highest Humidity of the Day: <span id="maxDoam"></span> </p>
             <p>Highest Temperature of the Day: <span id="maxNhietdo"></span> </p>
         </div>
+        <!-- Đồ thị sẽ được vẽ tại đây -->
         <canvas id="myChart"></canvas>
+        <!-- Chọn ngày và xem dữ liệu -->
         <input type="date" id="datePicker">
         <button onclick="viewSelectedDayData()">View Data</button>
     </div>
+    <!-- JavaScript để tương tác với Firebase và vẽ biểu đồ -->
     <script>
-        // Firebase config and initialization
+        // Firebase config và khởi tạo
         const firebaseConfig = {
             apiKey: "AIzaSyDgr8T3h4HH3_ZRDtwtCWUw2ZF90qbjd84",
             authDomain: "iot-native.firebaseapp.com",
@@ -83,37 +89,25 @@
             messagingSenderId: "615449640664",
             appId: "1:615449640664:web:a448b7d18762640380e1ad"
         };
-
-
-
-
         firebase.initializeApp(firebaseConfig);
         var database = firebase.database();
-
-
-        // Initialize chart
+        // Khởi tạo biểu đồ
         var myChart;
         var ctx = document.getElementById('myChart').getContext('2d');
-
-
-        // Function to view data for selected day
+        // Hàm để xem dữ liệu cho ngày đã chọn
         function viewSelectedDayData() {
             var selectedDate = document.getElementById('datePicker').value;
             if (!selectedDate) {
-                alert('Please select a date.');
+                alert('Vui lòng chọn một ngày.');
                 return;
             }
-
-
-            // Retrieve data from Firebase for selected day
+            // Lấy dữ liệu từ Firebase cho ngày đã chọn
             database.ref('chartData/' + selectedDate).once('value').then(function (snapshot) {
                 var chartData = snapshot.val();
                 if (chartData) {
-                    // Clear previous chart
+                    // Xóa biểu đồ trước đó
                     if (myChart) myChart.destroy();
-
-
-                    // Create new chart with selected day's data
+                    // Vẽ biểu đồ mới với dữ liệu của ngày đã chọn
                     myChart = new Chart(ctx, {
                         type: 'line',
                         data: {
@@ -140,29 +134,23 @@
                             }
                         }
                     });
-
-
-                    // Calculate and display max temperature and humidity of the day
+                    // Tính toán và hiển thị độ ẩm và nhiệt độ cao nhất trong ngày
                     var maxHumidity = Math.max(...chartData.humidityData);
                     var maxTemperature = Math.max(...chartData.temperatureData);
                     document.getElementById('maxDoam').innerText = maxHumidity + ' %';
                     document.getElementById('maxNhietdo').innerText = maxTemperature + ' °C';
                 } else {
-                    alert('No data available for the selected date.');
+                    alert('Không có dữ liệu cho ngày đã chọn.');
                 }
             });
         }
-
-
-        // Real-time data update
+        // Cập nhật dữ liệu thời gian thực
         database.ref('test').on('value', function (snapshot) {
             var data = snapshot.val();
             document.getElementById('doam').innerText = data.doam + ' %';
             document.getElementById('nhietdo').innerText = data.nhietdo + ' °C';
             updateChart(data.doam, data.nhietdo);
-
-
-            // Save chart state to Firebase for the current day
+            // Lưu trạng thái biểu đồ vào Firebase cho ngày hiện tại
             var today = new Date();
             var dateKey = today.toISOString().slice(0, 10);
             var chartData = {
@@ -172,9 +160,7 @@
             };
             database.ref('chartData/' + dateKey).set(chartData);
         });
-
-
-        // Initial check for existing chart data
+        // Kiểm tra ban đầu dữ liệu biểu đồ có tồn tại không
         database.ref('chartData').once('value').then(function (snapshot) {
             var chartData = snapshot.val();
             if (chartData) {
@@ -239,31 +225,23 @@
                 });
             }
         });
-
-
-        // Update chart
+        // Cập nhật biểu đồ
         function updateChart(humidity, temperature) {
             var labels = myChart.data.labels;
             var humidityData = myChart.data.datasets[0].data;
             var temperatureData = myChart.data.datasets[1].data;
-
-
-            // Add new data
+            // Thêm dữ liệu mới
             var currentTime = new Date().toLocaleTimeString();
             labels.push(currentTime);
             humidityData.push(humidity);
             temperatureData.push(temperature);
-
-
-            // Limit the number of points on the chart
+            // Giới hạn số điểm trên biểu đồ
             if (labels.length > 10) {
                 labels.shift();
                 humidityData.shift();
                 temperatureData.shift();
             }
-
-
-            // Update the chart
+            // Cập nhật biểu đồ
             myChart.update();
         }
     </script>

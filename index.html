@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realtime Data</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <h1>Realtime Data</h1>
+    <p>Độ ẩm: <span id="doam"></span></p>
+    <p>Nhiệt độ: <span id="nhietdo"></span></p>
+    <div id="notification"></div>
+    <canvas id="myChart" width="400" height="200"></canvas>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDgr8T3h4HH3_ZRDtwtCWUw2ZF90qbjd84",
+            authDomain: "iot-native.firebaseapp.com",
+            databaseURL: "https://iot-native-default-rtdb.firebaseio.com",
+            projectId: "iot-native",
+            storageBucket: "iot-native.appspot.com",
+            messagingSenderId: "615449640664",
+            appId: "1:615449640664:web:a448b7d18762640380e1ad"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        var database = firebase.database();
+        var notificationElement = document.getElementById('notification');
+        var myChart;
+
+        // Lắng nghe sự thay đổi trong dữ liệu và cập nhật biểu đồ
+        database.ref('test').on('value', function (snapshot) {
+            var data = snapshot.val();
+            document.getElementById('doam').innerText = data.doam;
+            document.getElementById('nhietdo').innerText = data.nhietdo;
+            displayNotification("Cập nhật dữ liệu thành công!");
+            updateChart(data.doam, data.nhietdo);
+        });
+
+        // Hiển thị thông báo
+        function displayNotification(message) {
+            notificationElement.innerText = message;
+        }
+
+        // Cập nhật biểu đồ
+        function updateChart(humidity, temperature) {
+            if (!myChart) {
+                var ctx = document.getElementById('myChart').getContext('2d');
+                myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Độ ẩm',
+                            data: [],
+                            borderColor: 'blue',
+                            backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                            borderWidth: 1
+                        }, {
+                            label: 'Nhiệt độ',
+                            data: [],
+                            borderColor: 'red',
+                            backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            var labels = myChart.data.labels;
+            var humidityData = myChart.data.datasets[0].data;
+            var temperatureData = myChart.data.datasets[1].data;
+
+            // Thêm dữ liệu mới
+            labels.push(new Date().toLocaleTimeString());
+            humidityData.push(humidity);
+            temperatureData.push(temperature);
+
+            // Giới hạn số lượng điểm trên biểu đồ
+            if (labels.length > 10) {
+                labels.shift();
+                humidityData.shift();
+                temperatureData.shift();
+            }
+
+            // Cập nhật biểu đồ
+            myChart.update();
+        }
+    </script>
+</body>
+
+</html>

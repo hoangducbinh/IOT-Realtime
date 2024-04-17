@@ -12,65 +12,65 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f0f0;
+            background-color: #f5f5f5;
         }
         .container {
-            max-width: 90%;
+            max-width: 800px;
             margin: 20px auto;
             background-color: #fff;
-            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
             text-align: center;
         }
         h1 {
             margin-bottom: 20px;
             color: #333;
-            font-size: 24px;
+            font-size: 28px;
         }
         p {
             margin: 10px 0;
             color: #666;
-            font-size: 16px;
+            font-size: 18px;
         }
         span {
             font-weight: bold;
             color: #007bff;
         }
         input[type="date"], button {
-            padding: 10px 20px;
+            padding: 12px 24px;
             margin: 10px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             background-color: #007bff;
             color: #fff;
-            font-size: 16px;
+            font-size: 18px;
             transition: background-color 0.3s;
         }
         input[type="date"]:hover, button:hover {
             background-color: #0056b3;
         }
         canvas {
-            margin-top: 20px;
+            margin-top: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 100%;
+            width: 100%;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Realtime Data</h1>
+        <h1>Realtime Data Dashboard</h1>
         <div class="data-display">
-            <p>Độ ẩm: <span id="doam"></span></p>
-            <p>Nhiệt độ: <span id="nhietdo"></span></p>
-            <p>Độ ẩm cao nhất trong ngày: <span id="maxDoam"></span></p>
-            <p>Nhiệt độ cao nhất trong ngày: <span id="maxNhietdo"></span></p>
+            <p>Humidity: <span id="doam"></span> </p>
+            <p>Temperature: <span id="nhietdo"></span> </p>
+            <p>Highest Humidity of the Day: <span id="maxDoam"></span> </p>
+            <p>Highest Temperature of the Day: <span id="maxNhietdo"></span> </p>
         </div>
         <canvas id="myChart"></canvas>
         <input type="date" id="datePicker">
-        <button onclick="viewSelectedDayData()">Xem lại dữ liệu</button>
+        <button onclick="viewSelectedDayData()">View Data</button>
     </div>
     <script>
         // Firebase config and initialization
@@ -84,20 +84,26 @@
             appId: "1:615449640664:web:a448b7d18762640380e1ad"
         };
 
+
+
+
         firebase.initializeApp(firebaseConfig);
         var database = firebase.database();
+
 
         // Initialize chart
         var myChart;
         var ctx = document.getElementById('myChart').getContext('2d');
 
+
         // Function to view data for selected day
         function viewSelectedDayData() {
             var selectedDate = document.getElementById('datePicker').value;
             if (!selectedDate) {
-                alert('Vui lòng chọn một ngày.');
+                alert('Please select a date.');
                 return;
             }
+
 
             // Retrieve data from Firebase for selected day
             database.ref('chartData/' + selectedDate).once('value').then(function (snapshot) {
@@ -106,19 +112,20 @@
                     // Clear previous chart
                     if (myChart) myChart.destroy();
 
+
                     // Create new chart with selected day's data
                     myChart = new Chart(ctx, {
                         type: 'line',
                         data: {
                             labels: chartData.labels,
                             datasets: [{
-                                label: 'Độ ẩm',
+                                label: 'Humidity',
                                 data: chartData.humidityData,
                                 borderColor: 'blue',
                                 backgroundColor: 'rgba(0, 0, 255, 0.1)',
                                 borderWidth: 1
                             }, {
-                                label: 'Nhiệt độ',
+                                label: 'Temperature',
                                 data: chartData.temperatureData,
                                 borderColor: 'red',
                                 backgroundColor: 'rgba(255, 0, 0, 0.1)',
@@ -134,23 +141,26 @@
                         }
                     });
 
+
                     // Calculate and display max temperature and humidity of the day
                     var maxHumidity = Math.max(...chartData.humidityData);
                     var maxTemperature = Math.max(...chartData.temperatureData);
-                    document.getElementById('maxDoam').innerText = maxHumidity;
-                    document.getElementById('maxNhietdo').innerText = maxTemperature;
+                    document.getElementById('maxDoam').innerText = maxHumidity + ' %';
+                    document.getElementById('maxNhietdo').innerText = maxTemperature + ' °C';
                 } else {
-                    alert('Không có dữ liệu cho ngày đã chọn.');
+                    alert('No data available for the selected date.');
                 }
             });
         }
+
+
         // Real-time data update
         database.ref('test').on('value', function (snapshot) {
             var data = snapshot.val();
-            document.getElementById('doam').innerText = data.doam;
-            document.getElementById('nhietdo').innerText = data.nhietdo;
-            displayNotification("Cập nhật dữ liệu thành công!");
+            document.getElementById('doam').innerText = data.doam + ' %';
+            document.getElementById('nhietdo').innerText = data.nhietdo + ' °C';
             updateChart(data.doam, data.nhietdo);
+
 
             // Save chart state to Firebase for the current day
             var today = new Date();
@@ -162,6 +172,7 @@
             };
             database.ref('chartData/' + dateKey).set(chartData);
         });
+
 
         // Initial check for existing chart data
         database.ref('chartData').once('value').then(function (snapshot) {
@@ -176,13 +187,13 @@
                         data: {
                             labels: todayChartData.labels,
                             datasets: [{
-                                label: 'Độ ẩm',
+                                label: 'Humidity',
                                 data: todayChartData.humidityData,
                                 borderColor: 'blue',
                                 backgroundColor: 'rgba(0, 0, 255, 0.1)',
                                 borderWidth: 1
                             }, {
-                                label: 'Nhiệt độ',
+                                label: 'Temperature',
                                 data: todayChartData.temperatureData,
                                 borderColor: 'red',
                                 backgroundColor: 'rgba(255, 0, 0, 0.1)',
@@ -205,13 +216,13 @@
                     data: {
                         labels: [],
                         datasets: [{
-                            label: 'Độ ẩm',
+                            label: 'Humidity',
                             data: [],
                             borderColor: 'blue',
                             backgroundColor: 'rgba(0, 0, 255, 0.1)',
                             borderWidth: 1
                         }, {
-                            label: 'Nhiệt độ',
+                            label: 'Temperature',
                             data: [],
                             borderColor: 'red',
                             backgroundColor: 'rgba(255, 0, 0, 0.1)',
@@ -229,10 +240,6 @@
             }
         });
 
-        // Display notification
-        function displayNotification(message) {
-            notificationElement.innerText = message;
-        }
 
         // Update chart
         function updateChart(humidity, temperature) {
@@ -240,11 +247,13 @@
             var humidityData = myChart.data.datasets[0].data;
             var temperatureData = myChart.data.datasets[1].data;
 
+
             // Add new data
             var currentTime = new Date().toLocaleTimeString();
             labels.push(currentTime);
             humidityData.push(humidity);
             temperatureData.push(temperature);
+
 
             // Limit the number of points on the chart
             if (labels.length > 10) {
@@ -252,6 +261,7 @@
                 humidityData.shift();
                 temperatureData.shift();
             }
+
 
             // Update the chart
             myChart.update();
